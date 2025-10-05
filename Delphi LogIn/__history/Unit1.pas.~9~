@@ -1,0 +1,112 @@
+unit Unit1;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  Vcl.StdCtrls, FireDAC.Comp.Client, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
+  FireDAC.Stan.Async, FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.DApt,
+  FireDAC.UI.Intf, FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
+  FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.VCLUI.Wait, FireDAC.Stan.Param,
+  FireDAC.DatS, FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.DataSet;
+
+type
+  TForm1 = class(TForm)
+    FDConnection1: TFDConnection;
+    FDQuery1: TFDQuery;
+    edtUsername: TEdit;
+    edtPassword: TEdit;
+    btnTest: TButton;
+    lblUser: TLabel;
+    lblPass: TLabel;
+    btnLogin: TButton;
+    procedure FormCreate(Sender: TObject);
+    procedure btnLoginClick(Sender: TObject);
+    procedure btnTestClick(Sender: TObject);
+  private
+    procedure SetupDatabase;
+  public
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.SetupDatabase;
+begin
+  try
+    if not FDConnection1.Connected then
+      FDConnection1.Connected := True;
+
+    // Create users table if it doesn't exist
+    FDQuery1.Close;
+    FDQuery1.SQL.Text :=
+      'CREATE TABLE IF NOT EXISTS users (' +
+      'id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+      'username TEXT NOT NULL UNIQUE,' +
+      'password TEXT NOT NULL);';
+    FDQuery1.ExecSQL;
+
+    // Insert sample user if not exists
+    FDQuery1.Close;
+    FDQuery1.SQL.Text :=
+      'INSERT OR IGNORE INTO users (username, password) VALUES (:u, :p)';
+    FDQuery1.ParamByName('u').AsString := 'admin';
+    FDQuery1.ParamByName('p').AsString := '1234';
+    FDQuery1.ExecSQL;
+
+     ShowMessage('Sample user inserted if not exists.');
+  except
+    on E: Exception do
+      ShowMessage('Database setup error: ' + E.Message);
+  end;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  SetupDatabase;
+end;
+
+procedure TForm1.btnTestClick(Sender: TObject);
+begin
+  try
+    if not FDConnection1.Connected then
+      FDConnection1.Connected := True;
+    ShowMessage('SQLite connection successful!');
+  except
+    on E: Exception do
+      ShowMessage('Error connecting to SQLite: ' + E.Message);
+  end;
+end;
+
+procedure TForm1.btnLoginClick(Sender: TObject);
+begin
+  try
+    if not FDConnection1.Connected then
+      FDConnection1.Connected := True;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Error connecting to database: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  FDQuery1.Close;
+  FDQuery1.SQL.Text := 'SELECT * FROM users WHERE username = :u AND password = :p';
+  FDQuery1.ParamByName('u').AsString := edtUsername.Text;
+  FDQuery1.ParamByName('p').AsString := edtPassword.Text;
+  FDQuery1.Open;
+
+  if not FDQuery1.IsEmpty then
+    ShowMessage('Login successful!')
+  else
+    ShowMessage('Invalid username or password.');
+end;
+
+end.

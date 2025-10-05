@@ -1,0 +1,37 @@
+﻿unit Unit2;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
+  Vcl.Imaging.jpeg, Vcl.ExtCtrls;
+
+type
+  TForm2 = class(TForm)
+    Button1: TButton;
+    Image1: TImage;
+    Welcome: TLabel;
+    procedure Button1Click(Sender: TObject);
+  end;
+
+var
+  Form2: TForm2;
+
+implementation
+
+{$R *.dfm}
+
+uses Unit1;  // dodaj da može da vidi Form1 (login formu)
+
+procedure TForm2.Button1Click(Sender: TObject);
+begin
+  // Kreiraj login formu ako već nije kreirana
+  if not Assigned(Form1) then
+    Application.CreateForm(TForm1, Form1);
+
+  Form1.Show;   // otvori login formu
+  Self.Hide;    // sakrij start formu
+end;
+
+end.
